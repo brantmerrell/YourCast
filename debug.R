@@ -1,131 +1,42 @@
-# Function to recognize and read data file and perform checks
+# debugging the yourpath() function:
 
-reader <- function(filename,dpath,year.var,sample.frame,
-                   verbose) {
-  # What type of file is that data?
-  if (length(grep(".txt",filename,ignore.case=TRUE))>0) {
-    cs <- read.table(paste(dpath,"/",filename,sep=""),header=TRUE)
-  }
+# background:
+# yourpath() works when input sample.frame = NULL, but throws error otherwise:
+# Error in if (as.integer(rownames(data[[i]])[nrow(data[[i]])]) != sample.frame[4]) { : 
+#     missing value where TRUE/FALSE needed
+#   In addition: Warning message:
+#     NAs introduced by coercion 
 
-  else if (length(grep(".csv",filename,ignore.case=TRUE))>0) {
-    cs <- read.csv(paste(dpath,"/",filename,sep=""),header=TRUE)
-  }
+rm(list=ls())
+load("to brant 01.RData")
+# replicate environment from "to brant 01.R"
 
-  else if (length(grep(".dta",filename,ignore.case=TRUE))>0) {
-    cs <- read.dta(paste(dpath,"/",filename,sep=""))
-  }
-  
-  else {stop(paste("File type for '",filename,"' not recognized. Please make sure your file is in '.txt', '.csv', or '.dta' format and has the extension in the filename. If using '.RData' format, please load objects into list on workspace and use 'datalist' option",
-                   sep=""))}
+# replicate arguments from "to brant 01.R" lines 134:138
 
-  if(verbose) {cat(filename,"\n")}
-  # if year is a variable rather than the row label, make it
-  # the row label and drop the variable "year"
-  if(year.var) {
-    if(is.null(rownames(cs)) || rownames(cs)[1]=="1")
-    {rownames(cs) <- cs$year
-    cs$year <- NULL}
-  }
+dpath 
+tag
+year.var
+sample.frame
+verbose
 
-  # Does cross section now have rownames?
-  if(is.null(rownames(cs)) || rownames(cs)[1]=="1")
-    {stop(paste("Cross section '",filename,
-                "' does not have rownames or merely has index ('1'...'N') rownames. Please add rownames that reflect year of time series.",
-                sep=""))}
-
-#  # make sure cross section ends at last predicted year
-#  if(!is.null(sample.frame)) {
-#    if(as.integer(rownames(cs[nrow(cs),]))!=sample.frame[4])
-#      {stop(paste("Cross section '",filename,"' ends at year '",
-#                  as.integer(rownames(cs[nrow(cs),])),"' and not '",
-#                  sample.frame[4],"'",
-#                  ". Be sure to include all years up to last predicted year.",
-#                  sep=""))
-#     }
-#                
-#  # check whether all years after first observed year are included in
-#  # dataframe
-#  if(as.integer(rownames(cs[nrow(cs),]))-as.integer(rownames(cs[1,]))
-#     +1!=nrow(cs))
-#    {stop(paste("Missing years in cross section '",filename,
-#                "'. Be sure to include all years from first observed year to last predicted year, even if NA.",
-#                sep=""))}
-#                               }
-  return(cs)
-}
-
-################################################################
-
-# Function for reading in auxillary files from 'dpath'
-# Same as 'reader' function but far simpler
-
-readerlite <- function(filename,dpath,verbose) {
-  # What type of file is that data?
-  if (length(grep(".txt",filename,ignore.case=TRUE))>0) {
-    cs <- read.table(paste(dpath,"/",filename,sep=""),header=TRUE,
-                     colClasses="character")
-  }
-
-  else if (length(grep(".csv",filename,ignore.case=TRUE))>0) {
-    cs <- read.csv(paste(dpath,"/",filename,sep=""),header=TRUE,
-                   colClasses="character")
-  }
-
-  else if (length(grep(".dta",filename,ignore.case=TRUE))>0) {
-    cs <- read.dta(paste(dpath,"/",filename,sep=""))
-  }
-  
-  else {stop(paste("File type for '",filename,"' not recognized. Please make sure your file is in '.txt', '.csv', or '.dta' format and has the extension in the filename.",
-                   sep=""))}
-  if(verbose) {cat(filename,"\n")}
-
-  return(cs)
-}
-
-################################################################
-
-# Function to separate CSID tag from the rest of the file name
-
-splitter <- function(string,tag,index.code) {
-
-  # splitting digits in center from rest of file name
-  code <- gsub("[^[:digit:]^]","",string)
-  code <- substr(code,nchar(code)-nchar(index.code)+1,nchar(code))
-
-  # Check to see if have numeric code portion
-  if(is.na(as.numeric(code))){stop(paste("Cross section name after '",tag,
-                 "' tag and before extension is not numeric.",
-                 sep=""))}
-  
-  
-  # check whether cross section label is number with correct number
-  # of digits
-   if(nchar(code)!=nchar(index.code))
-     {stop(paste("Cross section name after '",tag,
-                 "' tag and before extension not ",
-                 nchar(index.code),
-                 "-digit numeric CSID for file '",string,"'.",
-                 sep=""))}
-  return(code)
-}
-
-################################################################
-
-yourprep <- function(dpath=getwd(),tag="csid",index.code="ggggaa",
-                     datalist=NULL,G.names=NULL,A.names=NULL,
-                     T.names=NULL,proximity=NULL,year.var=FALSE,
-                     sample.frame=NULL,summary=FALSE,verbose=FALSE,
-
-                     #lagging utility
-                     lag=NULL,formula=NULL,vars.nolag=NULL) {
+# function (
+  # dpath = getwd(), tag = "csid", 
+index.code = "ggggaa"; datalist = NULL; G.names = NULL; A.names = NULL; T.names = NULL; 
+proximity = NULL; 
+# year.var = FALSE; sample.frame = NULL
+summary = FALSE 
+# verbose = FALSE, 
+lag = NULL; formula = NULL; vars.nolag = NULL
+# ) 
+{
   datanames <- dir(dpath)[grep(tag, dir(dpath), ignore.case = TRUE)]
-  
-  # paste(tag, "\\.", sep="") would only match csid.csv
+
+# paste(tag, "\\.", sep="") would only match csid.csv
   if (length(grep(paste(tag, "\\.", sep = ""), datanames)) != 
-      # if (length(grep(paste(tag, ".+\\.", sep = ""), datanames)) != 
+  # if (length(grep(paste(tag, ".+\\.", sep = ""), datanames)) != 
       0) {
     datanames <- datanames[-grepl(paste(tag, "\\.", sep = ""), 
-                                  datanames)]
+                                 datanames)]
   }
   if (is.na(datanames[1]) && is.null(datalist)) {
     stop(paste("'dpath'\ndoes not have properly labeled cross section objects; make to include\n'", 
@@ -294,6 +205,3 @@ yourprep <- function(dpath=getwd(),tag="csid",index.code="ggggaa",
   return(dataobj)
 }
 
-
-
-####################################################
